@@ -217,7 +217,7 @@ This is the documentation for WWW::Correios::CEP
 
 List of methods
 
-=head2 new WWW::Correios::CEP( { ... } );
+=head2 new
 
 Create an instance of WWW::Correios::CEP and configures it
 	
@@ -231,20 +231,20 @@ Parameters:
 You can see details on "Full Sample" below
 
 
-=head2 $cepper->find( $cep )
+=head2 find( $cep )
 
 Recive and CEP and try to get it address returning an hash ref with street, neighborhood, location, uf, cep and status.
 
 If you call this method on an array scope, it returns an array with each address, if not, address_count key is added to the hash.
 
-=head2 $cepper->tests( )
+=head2 tests( )
 
 This method make tests on some address for test if WWW::Correios::CEP still ok,
 you may want keep this, these tests use some time, but it depends on your connection speed/correios site speed.
 
 Retuns 1 if all tests are ok, if false, you may want to call dump_tests to see the changes
 
-=head2 $cepper->dump_tests( )
+=head2 dump_tests( )
 
 prints on STDOUT results of each test
 
@@ -254,19 +254,9 @@ You can change tests after new too, but you need to call $cepper->tests() if it 
 
 $array_ref_of_hash should be an array ref with hashs like "with_tests" bellow
 
-=head2 $cepper->getTests( )
+=head2 getTests( )
 
 return current tests array
-
-=head1 INTERNALS
-
-=head2 _parseHTML 
-
-parse "html" of correios sites
-
-=head2 _extractAddress 
-
-internal function called on "tests" and "find" methods
 
 
 =head1 Full Sample
@@ -314,10 +304,42 @@ internal function called on "tests" and "find" methods
 
 WWW::Correios::SRO
 
+=head1 BUGS AND LIMITATIONS
+
+No bugs have been reported by users.
+
+Tests FAIL are received without a real error in some machines with perl 5.12.
+
+You may reports on github:
+
+L<https://github.com/renatocron/WWW--Correios--CEP/issues>
+
+=head1 SUPPORT
+
+=head2 Perldoc
+
+You can find documentation for this module with the perldoc command.
+
+	perldoc WWW\:\:Correios\:\:CEP
+
+=head2 Github
+
+If you want to contribute with the code, you can fork this module on github:
+
+L<https://github.com/renatocron/WWW--Correios--CEP>
+
 =head1 AUTHOR
 
 Renato CRON, E<lt>rentocron@cpan.orgE<gt>
-Special thanks to Gabriel Andrade, E<lt>gabiru</lt> http://search.cpan.org/~gabiru/
+
+=head1 ACKNOWLEDGEMENTS
+
+Special thanks to Gabriel Andrade, E<gabiru>.
+
+By a better soluction to found table with address!
+
+L<scheme:http://search.cpan.org/~gabiru/>
+
 
 =head1 COPYRIGHT AND LICENSE
 

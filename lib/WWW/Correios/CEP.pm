@@ -1,11 +1,11 @@
 package WWW::Correios::CEP;
 
-use 5.010001;
 use strict;
-use warnings;
+# use warnings; 
 
 use LWP::UserAgent;
 use HTML::TreeBuilder::XPath;
+
 use Encode;
 use utf8;
 

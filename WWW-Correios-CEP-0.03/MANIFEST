@@ -12,6 +12,5 @@ t/000-report-versions.t
 t/WWW-Correios-CEP.t
 t/release-distmeta.t
 t/release-has-version.t
-t/release-pod-syntax.t
 t/release-unused-vars.t
 t/timeout.t

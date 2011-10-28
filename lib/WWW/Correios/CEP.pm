@@ -9,8 +9,7 @@ use HTML::TreeBuilder::XPath;
 use Encode;
 use utf8;
 
-our $VERSION = '0.02';
-
+our $VERSION = '0.03';
 
 #-------------------------------------------------------------------------------
 # Seta configuracao DEFAULT
@@ -35,7 +34,7 @@ sub new {
 		_user_agent    => 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
 
 		_lwp_ua        => undef,
-
+		_lwp_options   => { timeout => 30 },
 		_post_url      => 'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
 		_post_content  => 'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation=',
 		
@@ -45,8 +44,13 @@ sub new {
 	$this->{_tests}         = $params->{with_tests}    if (defined $params->{with_tests});
 	$this->{_user_agent}    = $params->{user_agent}    if (defined $params->{user_agent});
 
-	$this->{_post_url}      = $params->{_post_url}     if (defined $params->{post_url});
-	$this->{_post_content}  = $params->{_post_content} if (defined $params->{post_content});
+	$this->{_post_url}      = $params->{post_url}      if (defined $params->{post_url});
+	$this->{_post_content}  = $params->{post_content}  if (defined $params->{post_content});
+	
+	
+	$this->{_lwp_options}  = $params->{lwp_options} if (defined $params->{lwp_options});
+	
+	$this->{_lwp_options}{timeout} = $params->{timeout} if (defined $params->{timeout});
 
 	bless($this, $class);
 	return $this;
@@ -100,7 +104,7 @@ sub _extractAddress {
 	}else{
 	
 		if(!defined $this->{_lwp_ua}){
-			my $ua = LWP::UserAgent->new;
+			my $ua = LWP::UserAgent->new(%{$this->{_lwp_options}});
 			$ua->agent($this->{_user_agent});
 			$this->{_lwp_ua} = $ua;
 		}
@@ -222,11 +226,14 @@ List of methods
 Create an instance of WWW::Correios::CEP and configures it
 	
 Parameters:
+	timeout
 	require_tests 
 	with_tests
 	user_agent
 	post_url
 	post_content
+	lwp_options
+	
 
 You can see details on "Full Sample" below
 
@@ -264,6 +271,12 @@ return current tests array
 	my $cepper = new WWW::Correios::CEP(
 		# this is default, you can disable it with a explicit false value,
 		require_tests => 1,
+		
+		lwp_options  => {timeout => 10},
+		timeout      => 30, # 30 sec override 10 sec above, same as user_agent
+		# if you want to change user agent, that defaults to Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+		user_agent => 'IECA',
+		
 		# theses tests may fail if the Correios page have changed.
 		# Nevertheless, to not break this class when address/cep changes, you can set a your tests here
 		with_tests => [
@@ -276,8 +289,6 @@ return current tests array
 			{ street => 'Avenida Urucará'              , neighborhood => 'Cachoeirinha'          ,
 				location => 'Manaus'        , uf => 'AM', cep => '69065180' }
 		],
-		# if you want to change user agent, that defaults to Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
-		user_agent => 'IECA',
 
 		# if you want to change POST url
 		post_url => 'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
@@ -306,9 +317,8 @@ WWW::Correios::SRO
 
 =head1 BUGS AND LIMITATIONS
 
-No bugs have been reported by users.
+No bugs have been reported by users yet since 0.03.
 
-Tests FAIL are received without a real error in some machines with perl 5.12.
 
 You may reports on github:
 

@@ -8,7 +8,7 @@ Revision history for Perl extension WWW::Correios::CEP.
 	- Changes on _parseHTML method (thxs gabiruh)
 	- Added support to multiple address to a unique CEP
 		- you can test with CEP number 69405-0000
-		
-		
+
+
 0.03  Oct 28
 	- timeout / bugs

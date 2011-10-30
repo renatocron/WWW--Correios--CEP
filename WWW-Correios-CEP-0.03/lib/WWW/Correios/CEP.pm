@@ -264,16 +264,16 @@ List of methods
 =head2 new
 
 Create an instance of WWW::Correios::CEP and configures it
-	
+
 Parameters:
 	timeout
-	require_tests 
+	require_tests
 	with_tests
 	user_agent
 	post_url
 	post_content
 	lwp_options
-	
+
 
 You can see details on "Full Sample" below
 
@@ -311,12 +311,12 @@ return current tests array
 	my $cepper = new WWW::Correios::CEP(
 		# this is default, you can disable it with a explicit false value,
 		require_tests => 1,
-		
+
 		lwp_options  => {timeout => 10},
 		timeout      => 30, # 30 sec override 10 sec above, same as user_agent
 		# if you want to change user agent, that defaults to Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
 		user_agent => 'IECA',
-		
+
 		# theses tests may fail if the Correios page have changed.
 		# Nevertheless, to not break this class when address/cep changes, you can set a your tests here
 		with_tests => [
@@ -332,7 +332,7 @@ return current tests array
 
 		# if you want to change POST url
 		post_url => 'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
-		
+
 		# if you want to change post content, remenber that "cep number" will be concat on end of this string
 		post_content => 'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation='
 	);

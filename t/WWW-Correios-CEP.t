@@ -28,10 +28,11 @@ my $cepper = new WWW::Correios::CEP();
 		],
 
 is(ref $cepper, 'WWW::Correios::CEP', 'WWW::Correios::CEP class ok');
-
+print STDERR "download...\n";
 # i changed to Dumper to easy read erros
 my $got  = Dumper $cepper->find( '03640-000' );
 my $expt = Dumper { street => 'Rua Cupá', neighborhood => 'Vila Carlos de Campos', location => 'São Paulo', uf => 'SP', cep => '03640-000', status => '' };
 
+print STDERR "got $got exp $expt\n";
 is_deeply( $got, $expt, 'testing address for 03640-000');
 

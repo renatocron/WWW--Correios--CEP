@@ -30,7 +30,8 @@ sub parse {
     
     my $cels
         = $parser->findnodes('//div[@class="ctrlcontent"]/table[2]/tr/td');
-    
+use Data::Dumper;
+print Dumper $html, $cels;
     $data->{street}         = $cels->[1]->as_text;
     $data->{neighborhood}   = $cels->[3]->as_text;
     $data->{cep}            = $cels->[7]->as_text;

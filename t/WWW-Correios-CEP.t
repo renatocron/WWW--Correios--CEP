@@ -16,17 +16,18 @@ BEGIN { use_ok('WWW::Correios::CEP') };
 
 
 my $cepper = new WWW::Correios::CEP();
-		_tests => [
-			{ street => 'Rua Realidade dos Nordestinos', neighborhood => 'Cidade Nova Heliópolis',
-				location => 'São Paulo'     , uf => 'SP', cep => '04236-000' , status => ''},
-			{ street => 'Rua Rio Piracicaba'           , neighborhood => 'I.A.P.I.'              ,
-				location => 'Osasco'        , uf => 'SP', cep => '06236-040' , status => ''},
-			{ street => 'Rua Hugo Baldessarini'        , neighborhood => 'Vista Alegre'          ,
-				location => 'Rio de Janeiro', uf => 'RJ', cep => '21236-040' , status => ''},
-			{ street => 'Avenida Urucará'              , neighborhood => 'Cachoeirinha'          ,
-				location => 'Manaus'        , uf => 'AM', cep => '69065-180' , status => ''}
-		],
-
+=pod
+	_tests => [
+		{ street => 'Rua Realidade dos Nordestinos', neighborhood => 'Cidade Nova Heliópolis',
+			location => 'São Paulo'     , uf => 'SP', cep => '04236-000' , status => ''},
+		{ street => 'Rua Rio Piracicaba'           , neighborhood => 'I.A.P.I.'              ,
+			location => 'Osasco'        , uf => 'SP', cep => '06236-040' , status => ''},
+		{ street => 'Rua Hugo Baldessarini'        , neighborhood => 'Vista Alegre'          ,
+			location => 'Rio de Janeiro', uf => 'RJ', cep => '21236-040' , status => ''},
+		{ street => 'Avenida Urucará'              , neighborhood => 'Cachoeirinha'          ,
+			location => 'Manaus'        , uf => 'AM', cep => '69065-180' , status => ''}
+	],
+=cut
 is(ref $cepper, 'WWW::Correios::CEP', 'WWW::Correios::CEP class ok');
 print STDERR "download...\n";
 # i changed to Dumper to easy read erros

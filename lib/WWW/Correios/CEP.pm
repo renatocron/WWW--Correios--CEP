@@ -57,10 +57,10 @@ sub new {
     }
     
     unless ( defined $atts->{parser} ) {
-        require WWW::Correios::Parser::HTML::TreeBuilder::XPath;
+        require WWW::Correios::Parser::HTML::TreeBuilder::LibXML;
         
         $atts->{parser}
-            = WWW::Correios::Parser::HTML::TreeBuilder::XPath->new;
+            = WWW::Correios::Parser::HTML::TreeBuilder::LibXML->new;
     }
     
     return bless $atts, $class;
@@ -73,8 +73,7 @@ sub find {
     $cep =~ s/\D//g
         if defined $cep;
     
-    return {}
-        unless $cep && length $cep == 8;
+    return undef unless $cep && length $cep == 8;
     
     my $data;
     
@@ -139,6 +138,12 @@ WWW::Correios::CEP
 Version 0.04
 
 =head1 SYNOPSIS
+    use WWW::Correios::CEP;
+
+    my $agent   = WWW::Correios::CEP->new();
+
+    my $cep = $agent->find( q{22460-070} );
+
 
     use WWW::Correios::CEP;
     use WWW::Correios::Parser::HTML::TreeBuilder::LibXML;

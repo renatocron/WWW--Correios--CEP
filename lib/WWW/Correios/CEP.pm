@@ -227,8 +227,10 @@ Renato CRON, E<lt>rentocron@cpan.orgE<gt>
 
 =head1 ACKNOWLEDGEMENTS
 
-Special thanks to Gabriel "gabiru" Andrade for providing a better
+2011 - Special thanks to Gabriel "gabiru" Andrade for providing a better
 solution for finding addresses!
+
+2014 - Thanks to Garu, for removing legacy test code and improving docs!
 
 =head1 COPYRIGHT AND LICENSE
 

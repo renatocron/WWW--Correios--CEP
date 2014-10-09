@@ -1,8 +1,6 @@
 package WWW::Correios::CEP;
-
 use strict;
-
-# use warnings;
+use warnings;
 
 use LWP::UserAgent;
 use HTML::TreeBuilder::XPath;
@@ -10,89 +8,35 @@ use HTML::TreeBuilder::XPath;
 use Encode;
 use utf8;
 
-our $VERSION = '0.032';
-
-#-------------------------------------------------------------------------------
-# Seta configuracao DEFAULT
-#-------------------------------------------------------------------------------
 sub new {
-    my $class  = shift();
-    my $params = shift();
+    my ($class, $params) = @_;
 
     my $this = {
-        _tests => [
-            {
-                street       => 'Rua Realidade dos Nordestinos',
-                neighborhood => 'Cidade Nova Heliópolis',
-                location     => 'São Paulo',
-                uf           => 'SP',
-                cep          => '04236-000',
-                status       => ''
-            }
-        ],
-        _require_tests => 0,
-        _tests_status  => undef,
-        _user_agent    => 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+        _user_agent   => defined $params->{user_agent}
+                       ? $params->{user_agent}
+                       : 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+        _lwp_ua       => undef,
+        _lwp_options  => $params->{lwp_options} || { timeout => 30 },
 
-        _lwp_ua      => undef,
-        _lwp_options => { timeout => 30 },
-        _post_url =>
+        _post_url     => defined $params->{post_url}
+                       ? $params->{post_url}
+                       :
 'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
-        _post_content =>
+
+        _post_content => defined $params->{post_content}
+                       ? $params->{post_content}
+                       :
 'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation=',
-
-        _pass_test => 0
     };
-    $this->{_require_tests} = $params->{require_tests}
-      if ( defined $params->{require_tests} );
-    $this->{_tests} = $params->{with_tests}
-      if ( defined $params->{with_tests} );
-    $this->{_user_agent} = $params->{user_agent}
-      if ( defined $params->{user_agent} );
-
-    $this->{_post_url} = $params->{post_url} if ( defined $params->{post_url} );
-    $this->{_post_content} = $params->{post_content}
-      if ( defined $params->{post_content} );
-
-    $this->{_lwp_options} = $params->{lwp_options}
-      if ( defined $params->{lwp_options} );
 
     $this->{_lwp_options}{timeout} = $params->{timeout}
-      if ( defined $params->{timeout} );
+      if defined $params->{timeout};
 
-    bless( $this, $class );
-    return $this;
-}
-
-sub tests {
-    my ($this) = @_;
-
-    my $is_ok = 1;
-    foreach my $test ( @{ $this->{_tests} } ) {
-        my $result = $this->_extractAddress( $test->{cep} );
-
-        my $ok = 1;
-        foreach ( keys %$result ) {
-            $ok = $result->{$_} eq $test->{$_};
-            last unless $ok;
-        }
-
-        push( @{ $this->{_tests_status} }, $result );
-
-        $is_ok = $ok ? $is_ok : 0;
-    }
-
-    $this->{_pass_test} = $is_ok;
-    return $is_ok;
+    return bless $this, $class;
 }
 
 sub find {
-    my ( $this, $cep ) = @_;
-
-    $this->tests()
-      if ( $this->{_require_tests} && !defined $this->{_tests_status} );
-
-    die("Tests FAIL") if ( !$this->{_pass_test} && $this->{_require_tests} );
+    my ($this, $cep) = @_;
 
     my @list_address = $this->_extractAddress($cep);
     $list_address[0]{address_count} = @list_address unless wantarray;
@@ -112,7 +56,6 @@ sub _extractAddress {
         $result[0]->{status} = "Error: Invalid CEP number ($cep)";
     }
     else {
-
         if ( !defined $this->{_lwp_ua} ) {
             my $ua = LWP::UserAgent->new( %{ $this->{_lwp_options} } );
             $ua->agent( $this->{_user_agent} );
@@ -129,14 +72,11 @@ sub _extractAddress {
 
         # Check the outcome of the response
         if ( $res->is_success ) {
-
             $this->_parseHTML( \@result, $res->content );
-
         }
         else {
             $result[0]->{status} = "Error: " . $res->status_line;
         }
-
     }
 
     return wantarray ? @result : $result[0];
@@ -180,33 +120,6 @@ sub _parseHTML {
     return 1;
 }
 
-sub setTests {
-    die("Tests must be an array ref")
-      unless ref $_[1] eq 'ARRAY' && ref $_[1][0] eq 'HASH';
-    $_[0]->{_tests} = $_[1];
-}
-
-sub getTests() {
-    shift()->{_tests};
-}
-
-sub dump_tests {
-    my ($this) = @_;
-
-    print("No tests found!") unless defined $this->{_tests_status};
-
-    foreach ( @{ $this->{_tests_status} } ) {
-        if ( $_->{error} ) {
-            print
-"$_->{cep}: ERROR $_->{error} - street: $_->{street}, neighborhood: $_->{neighborhood}, location: $_->{location}, uf: $_->{uf}\n";
-        }
-        else {
-            print
-"$_->{cep}: $_->{street}, $_->{neighborhood} - $_->{location} - $_->{uf}\n";
-        }
-    }
-}
-
 1;
 __END__
 
@@ -220,115 +133,75 @@ WWW::Correios::CEP - Perl extension for extract address from CEP (zip code) numb
 
 	use WWW::Correios::CEP;
 
-	my $cepper = new WWW::Correios::CEP();
+	my $cepper = WWW::Correios::CEP-new;
 
 	my $address = $cepper->find( $cep );
-	# returns hashref like { street => '', neighborhood => '', location => '', uf => 'SP', cep => '', status => '' }
 
-
-note: if you call "find" before "test" and require_tests is true, tests will be called
+    print $address->{street}; # neighborhood, location, uf
 
 =head1 DESCRIPTION
 
-This is the documentation for WWW::Correios::CEP
+This module fetches CEP information (Brazilian ZIP codes) directly from
+the Correios website, Brazil's official post office company.
 
 
 =head1 METHODS
 
-List of methods
-
 =head2 new
 
-Create an instance of WWW::Correios::CEP and configures it
+Creates a new instance of WWW::Correios::CEP. Accepts the following arguments:
 
-Parameters:
-	timeout
-	require_tests
-	with_tests
-	user_agent
-	post_url
-	post_content
-	lwp_options
+=over 4
 
+=item * timeout
 
-You can see details on "Full Sample" below
+when to give up connecting to the Correios website. Defaults to 30 seconds.
 
+=item * user_agent
+
+User Agent string. Default to "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"
+
+=item * post_url
+
+Where to post the query. Defaults to Correios' current location (we hope!)
+
+=item * post_content
+
+What to post in the query. Defaults to Correios' standard options (we hope!)
+
+=item * lwp_options
+
+Extra options to pass to LWP::UserAgent.
+
+=back
 
 =head2 find( $cep )
 
-Recive and CEP and try to get it address returning an hash ref with street, neighborhood, location, uf, cep and status.
+Recieves the CEP string and tries to get address data. Returns a hashref with the following keys:
 
-If you call this method on an array scope, it returns an array with each address, if not, address_count key is added to the hash.
+=over 4
 
-=head2 tests( )
+=item * street
 
-This method make tests on some address for test if WWW::Correios::CEP still ok,
-you may want keep this, these tests use some time, but it depends on your connection speed/correios site speed.
+=item * neighborhood
 
-Retuns 1 if all tests are ok, if false, you may want to call dump_tests to see the changes
+=item * location
 
-=head2 dump_tests( )
+=item * uf
 
-prints on STDOUT results of each test
+=item * status
 
-=head2 $cepper->setTests( $array_ref_of_hash )
+=back
 
-You can change tests after new too, but you need to call $cepper->tests() if it already called.
-
-$array_ref_of_hash should be an array ref with hashs like "with_tests" bellow
-
-=head2 getTests( )
-
-return current tests array
-
-
-=head1 Full Sample
-
-	my $cepper = new WWW::Correios::CEP(
-		# this is default, you can enable it with a explicit true value,
-		require_tests => 0,
-
-		lwp_options  => {timeout => 10},
-		timeout      => 30, # 30 sec override 10 sec above, same as user_agent
-		# if you want to change user agent, that defaults to Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
-		user_agent => 'IECA',
-
-		# theses tests may fail if the Correios page have changed.
-		# Nevertheless, to not break this class when address/cep changes, you can set a your tests here
-		with_tests => [
-			{ street => 'Rua Realidade dos Nordestinos', neighborhood => 'Cidade Nova Heliópolis',
-				location => 'São Paulo'     , uf => 'SP', cep => '04236000' },
-		],
-
-		# if you want to change POST url
-		post_url => 'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
-
-		# if you want to change post content, remenber that "cep number" will be concat on end of this string
-		post_content => 'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation='
-	);
-
-	eval{$cepper->tests()};
-	if($@){
-		# you can use $@ if you want just error message
-		$cepper->dump_tests;
-	}else{
-		my $address = $cepper->find( $cep );
-
-		# returns hashref like { street => '', neighborhood => '', location => '', uf => 'SP', cep => '', status => '', address_count => 0 }
-
-		# you can also call find like it:
-		my @address = $cepper->find( $cep );
-
-	}
+If there is more than one address, it returns a list of hashrefs in list context, or
+just the first hashref in scalar context, together with an "C<address_count>" key with
+the total returned addresses.
 
 =head1 SEE ALSO
 
 WWW::Correios::SRO
 
 =head1 BUGS AND LIMITATIONS
-
-No bugs have been reported by users yet since 0.03.
-
 
 You may reports on github:
 
@@ -354,16 +227,12 @@ Renato CRON, E<lt>rentocron@cpan.orgE<gt>
 
 =head1 ACKNOWLEDGEMENTS
 
-Special thanks to Gabriel Andrade, E<gabiru>.
-
-By a better soluction to found table with address!
-
-L<scheme:http://search.cpan.org/~gabiru/>
-
+Special thanks to Gabriel "gabiru" Andrade for providing a better
+solution for finding addresses!
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2011 by Renato
+Copyright (C) 2011-2014 by RenatoCRON
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,
@@ -371,5 +240,3 @@ at your option, any later version of Perl 5 you may have available.
 
 See http://dev.perl.org/licenses/ for more information.
 
-
-=cut

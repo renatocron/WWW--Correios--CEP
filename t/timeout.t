@@ -10,10 +10,6 @@ my $cepper = WWW::Correios::CEP->new(
 
 is( ref $cepper, 'WWW::Correios::CEP', 'WWW::Correios::CEP class ok' );
 
-my $got = Dumper $cepper->find('03640-000');
+my $got = $cepper->find('03640-000');
 
-my $expt = Dumper {
-    'status' => 'Error: 500 Can\'t connect to 192.168.0.184:80 (timeout)'
-};
-
-is_deeply( $got, $expt, 'timeout in 1sec is ok!' );
+ok( eval{$got->{status}} =~ /^Error: 500 Can't connect/, 'timeout in 1sec is ok!' );

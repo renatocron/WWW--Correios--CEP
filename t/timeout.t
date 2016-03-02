@@ -1,7 +1,6 @@
 use utf8;
 
 use Test::More tests => 3;
-use Data::Dumper;
 BEGIN { use_ok('WWW::Correios::CEP') }
 
 my $cepper = WWW::Correios::CEP->new(
@@ -10,10 +9,11 @@ my $cepper = WWW::Correios::CEP->new(
 
 is( ref $cepper, 'WWW::Correios::CEP', 'WWW::Correios::CEP class ok' );
 
-my $got = Dumper $cepper->find('03640-000');
+my $got = $cepper->find('03640-000');
 
-my $expt = Dumper {
-    'status' => 'Error: 500 Can\'t connect to 192.168.0.184:80 (timeout)'
+my $expt = {
+    'status' => 'Error: 500 Can\'t connect to 192.168.0.184:80'
 };
 
-is_deeply( $got, $expt, 'timeout in 1sec is ok!' );
+like( $got->{status}, qr{Can't connect}, 'timeout in 1 sec is ok!' )
+    || diag explain $got;

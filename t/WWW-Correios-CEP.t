@@ -1,7 +1,6 @@
 use utf8;
 
 use Test::More tests => 3;
-use Data::Dumper;
 BEGIN { use_ok('WWW::Correios::CEP') }
 
 my $cepper = WWW::Correios::CEP->new;
@@ -9,7 +8,6 @@ my $cepper = WWW::Correios::CEP->new;
 is( ref $cepper, 'WWW::Correios::CEP', 'WWW::Correios::CEP class ok' );
 diag("downloading...");
 
-# i changed to Dumper to easy read erros
 my $got  = $cepper->find('03640-000');
 my $expt = {
     street       => 'Rua Cupá',
@@ -20,4 +18,4 @@ my $expt = {
     status       => '',
     address_count => 1
 };
-is_deeply( $got, $expt, 'testing address for 03640-000' );
+is_deeply( $got, $expt, 'testing address for 03640-000' ) || diag explain $got;

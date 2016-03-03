@@ -11,24 +11,22 @@ use Encode;
 use utf8;
 
 sub new {
-    my ($class, $params) = @_;
+    my ( $class, $params ) = @_;
 
     my $this = {
-        _user_agent   => defined $params->{user_agent}
-                       ? $params->{user_agent}
-                       : 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
-        _lwp_ua       => undef,
-        _lwp_options  => $params->{lwp_options} || { timeout => 30 },
+        _user_agent => defined $params->{user_agent}
+        ? $params->{user_agent}
+        : 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+        _lwp_ua      => undef,
+        _lwp_options => $params->{lwp_options} || { timeout => 30 },
 
-        _post_url     => defined $params->{post_url}
-                       ? $params->{post_url}
-                       :
-'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
+        _post_url => defined $params->{post_url}
+        ? $params->{post_url}
+        : 'http://www.buscacep.correios.com.br/sistemas/buscacep/resultadoBuscaCepEndereco.cfm',
 
         _post_content => defined $params->{post_content}
-                       ? $params->{post_content}
-                       :
-'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation=',
+        ? $params->{post_content}
+        : 'tipoCEP=LOG&semelhante=N&relaxation='
     };
 
     $this->{_lwp_options}{timeout} = $params->{timeout}
@@ -38,7 +36,7 @@ sub new {
 }
 
 sub find {
-    my ($this, $cep) = @_;
+    my ( $this, $cep ) = @_;
 
     my @list_address = $this->_extractAddress($cep);
     $list_address[0]{address_count} = @list_address unless wantarray;
@@ -59,8 +57,10 @@ sub _extractAddress {
     }
     else {
         if ( !defined $this->{_lwp_ua} ) {
+
             my $ua = LWP::UserAgent->new( %{ $this->{_lwp_options} } );
             $ua->agent( $this->{_user_agent} );
+            $ua->timeout( $this->{_lwp_options}{timeout} );
             $this->{_lwp_ua} = $ua;
         }
         my $ua = $this->{_lwp_ua};
@@ -68,17 +68,23 @@ sub _extractAddress {
         my $req = HTTP::Request->new( POST => $this->{_post_url} );
         $req->content_type('application/x-www-form-urlencoded');
         $req->content( $this->{_post_content} . $cep );
+        eval {
+            local $SIG{ALRM} = sub { die "Can't connect to server [alarm timeout]\n" };
+            alarm( $this->{_lwp_options}{timeout} + 1 );
 
-        # Pass request to the user agent and get a response back
-        my $res = $ua->request($req);
+            # Pass request to the user agent and get a response back
+            my $res = $ua->request($req);
 
-        # Check the outcome of the response
-        if ( $res->is_success ) {
-            $this->_parseHTML( \@result, $res->content );
-        }
-        else {
-            $result[0]->{status} = "Error: " . $res->status_line;
-        }
+            # Check the outcome of the response
+            if ( $res->is_success ) {
+                $this->_parseHTML( \@result, $res->content );
+            }
+            else {
+                $result[0]->{status} = "Error: " . $res->status_line;
+            }
+        };
+        alarm(0);
+        die $@ if ($@);
     }
 
     return wantarray ? @result : $result[0];
@@ -88,29 +94,27 @@ sub _parseHTML {
     my ( $this, $address_ref, $html ) = @_;
 
     my $tree = HTML::TreeBuilder::XPath->new;
-
-    $html = decode( "iso-8859-1", $html ) if ( $html =~ /iso-8859-1/io );
-
+    $html = decode( 'iso-8859-1', $html );
+    $html =~ s/&nbsp;//g;    # <-- findvalue is keeping that
     $tree->parse_content($html);
 
-    # thx to gabiru!
-    my $ref = $tree->findnodes('//tr[@onclick=~/detalharCep/]');
+    my $ref = $tree->findnodes('//table[contains(@class,"tmptabela")]/tr[not(th)]');
 
     while ( my $p = shift(@$ref) ) {
         my $address = {};
 
         $address->{street}       = $p->findvalue('./td[1]');
         $address->{neighborhood} = $p->findvalue('./td[2]');
-        $address->{location}     = $p->findvalue('./td[3]');
-        $address->{uf}           = $p->findvalue('./td[4]');
-        $address->{cep}          = $p->findvalue('./td[5]');
+        $address->{cep}          = $p->findvalue('./td[4]');
+
+        ( $address->{location}, $address->{uf} ) =
+          split qr{\s*/\s*} => $p->findvalue('./td[3]');
 
         if ( $address->{cep} ) {
             $address->{status} = '';
         }
         else {
-            $address->{status} =
-              'Error: Address not found, something is wrong...';
+            $address->{status} = 'Error: Address not found, something is wrong...';
         }
 
         push( @$address_ref, $address );
@@ -133,11 +137,11 @@ WWW::Correios::CEP - Perl extension for extract address from CEP (zip code) numb
 
 =head1 SYNOPSIS
 
-	use WWW::Correios::CEP;
+    use WWW::Correios::CEP;
 
-	my $cepper = WWW::Correios::CEP-new;
+    my $cepper = WWW::Correios::CEP-new;
 
-	my $address = $cepper->find( $cep );
+    my $address = $cepper->find( $cep );
 
     print $address->{street}; # neighborhood, location, uf
 
@@ -215,7 +219,7 @@ L<https://github.com/renatocron/WWW--Correios--CEP/issues>
 
 You can find documentation for this module with the perldoc command.
 
-	perldoc WWW\:\:Correios\:\:CEP
+    perldoc WWW\:\:Correios\:\:CEP
 
 =head2 Github
 

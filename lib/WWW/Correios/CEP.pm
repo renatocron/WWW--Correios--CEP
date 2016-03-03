@@ -21,12 +21,12 @@ sub new {
         _post_url     => defined $params->{post_url}
                        ? $params->{post_url}
                        :
-'http://www.buscacep.correios.com.br/servicos/dnec/consultaLogradouroAction.do',
+'http://www.buscacep.correios.com.br/sistemas/buscacep/resultadoBuscaCepEndereco.cfm',
 
         _post_content => defined $params->{post_content}
                        ? $params->{post_content}
                        :
-'StartRow=1&EndRow=10&TipoConsulta=relaxation&Metodo=listaLogradouro&relaxation=',
+'tipoCEP=LOG&semelhante=N&relaxation='
     };
 
     $this->{_lwp_options}{timeout} = $params->{timeout}
@@ -69,7 +69,6 @@ sub _extractAddress {
 
         # Pass request to the user agent and get a response back
         my $res = $ua->request($req);
-
         # Check the outcome of the response
         if ( $res->is_success ) {
             $this->_parseHTML( \@result, $res->content );
@@ -86,22 +85,21 @@ sub _parseHTML {
     my ( $this, $address_ref, $html ) = @_;
 
     my $tree = HTML::TreeBuilder::XPath->new;
-
-    $html = decode( "iso-8859-1", $html ) if ( $html =~ /iso-8859-1/io );
-
+    $html = decode( 'iso-8859-1', $html );
+    $html =~ s/&nbsp;//g; # <-- findvalue is keeping that
     $tree->parse_content($html);
 
-    # thx to gabiru!
-    my $ref = $tree->findnodes('//tr[@onclick=~/detalharCep/]');
+    my $ref = $tree->findnodes('//table[contains(@class,"tmptabela")]/tr[not(th)]');
 
     while ( my $p = shift(@$ref) ) {
         my $address = {};
 
         $address->{street}       = $p->findvalue('./td[1]');
         $address->{neighborhood} = $p->findvalue('./td[2]');
-        $address->{location}     = $p->findvalue('./td[3]');
-        $address->{uf}           = $p->findvalue('./td[4]');
-        $address->{cep}          = $p->findvalue('./td[5]');
+        $address->{cep}          = $p->findvalue('./td[4]');
+
+        ($address->{location}, $address->{uf}) =
+            split qr{\s*/\s*} => $p->findvalue('./td[3]');
 
         if ( $address->{cep} ) {
             $address->{status} = '';

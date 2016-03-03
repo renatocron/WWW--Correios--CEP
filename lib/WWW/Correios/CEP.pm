@@ -5,6 +5,8 @@ use warnings;
 use LWP::UserAgent;
 use HTML::TreeBuilder::XPath;
 
+our $VERSION = 1.01;
+
 use Encode;
 use utf8;
 
